@@ -1,7 +1,7 @@
 -- CREACION DE BASE DE DATOS --
 
-create schema deposito_articulos;
-use deposito_articulos;
+create schema deposito2;
+use deposito2;
 
 
 -- CREACION DE LAS TABLAS DE LA BD --
@@ -33,7 +33,7 @@ primary key (cuit_proveedores)
 create table clientes (
 cuit_clientes bigint not null,
 c_nombre varchar (75) not null,
-c_dirrecion varchar (200) null,
+c_direccion varchar (200) null,
 c_mail varchar (75) null,
 c_telefono varchar (40) not null,
 c_iva varchar (30) not null,
@@ -124,6 +124,8 @@ values (67938, 40613127, 'Esperanza Yáñez', 'Femenino', '+54 11 4385 1971', 'e
 (10703, 50376423, 'Santiago Flores', 'Masculino', '+54 11 4524 3725', 'santiago.flores@yahoo.com', 'Calle Granaderos, 1075 Santos Lugares, CP 1676, Buenos Aires, Argentina', '2016-02-09'), 
 (87180, 31110458, 'Julieta Muñoz', 'Femenino', '+54 11 4389 4846', 'julieta.munoz@hotmail.com', 'Calle Angel D\'Elía, 3997 La Tablada, CP 1766, Buenos Aires, Argentina', '2015-07-17');
 
+select * from operadores;
+
 
 -- IMPORTACION DE DATOS DE CLIENTES MEDIANTE ASISTENTE WORKBENCH --
 
@@ -161,7 +163,7 @@ select * from art_ub;
 
 select * from productos_defectuosos;
 
--- CAMBIÉ EL NOMBRE DE LA BD DE "DEPOSITO2" A "DEPOSITO_ARTICULOS", PERO LAS TABLAS, DATOS Y RELACIONES SON LAS MISMAS
+
 
 -- CREACION DE VISTA PRODUCTOS DEFECTUOSOS-- 
 
@@ -182,10 +184,13 @@ JOIN proveedores ON comprobantes.cuit_proveedores = proveedores.cuit_proveedores
 
 select * from defectuosos;
 
+
+
+
 -- CREACION DE LA FUNCION DISPONIBILIDAD DE STOCK --
 
 
-DELIMITER //
+DELIMITER $$
  
  CREATE FUNCTION disponibilidades(id int) RETURNS int
     DETERMINISTIC
@@ -223,22 +228,20 @@ BEGIN
     
 RETURN stock;
 
-END
+END $$
 
-
-
-//
-
-DELIMITER;
 
 -- EJECUCION DE LA FUNCION DISPONIBILIDAD DE STOCK --
 
 select disponibilidades (8);
 
+
+
+
 -- CREACION DE LA FUNCION DE ALERTA POR STOCK MINIMO --
 
 
-DELIMITER //
+DELIMITER $$
 
 CREATE FUNCTION alerta_stock(id int, umbral int) RETURNS varchar(400)
     DETERMINISTIC
@@ -276,7 +279,7 @@ BEGIN
   
   SELECT nombre INTO nombree FROM articulos WHERE id_articulos = id;
   
-  -- comparar el stock actual con el umbral y generar un mensaje de alerta si es necesario
+  -- COMPARAR EL STOCK ACTUAL CON EL UMBRAL Y GENERAR UN MENSAJE DE ALERTA SI ES NECESARIO --
   IF stock < umbral THEN
     SET mensaje = CONCAT('¡Alerta de stock bajo! El producto ', nombree, ' tiene un stock de ', stock, ' unidades.');
   ELSE
@@ -285,13 +288,12 @@ BEGIN
   
   
 
-  -- retornar el mensaje de alerta
+  -- RETORNAR EL MENSAJE DE ALERTA --
   RETURN mensaje;
 
 
-END
+END $$
 
-//
 
 
 
@@ -303,7 +305,7 @@ select alerta_stock (18, 50);
 
 -- CREACION DE STORED PROCEDURE --
 
-DELIMITER //
+DELIMITER $$
 
 CREATE PROCEDURE sp_articulos_order4(IN campo CHAR(120), IN campo2 CHAR (4))
 BEGIN
@@ -322,20 +324,20 @@ EXECUTE runSQL;
 DEALLOCATE PREPARE runSQL;
 
 
-END
-//
+END $$
+
 
 -- EJECUCION FUNCION --
 
 CALL sp_articulos_order4 ("nombre","desc");
 
 
+
+
 -- CREACION SP PARA INSERTAR REGISTRO DE PROVEEDORES --
 
 
-delimiter;
-
-DELIMITER//
+DELIMITER $$
 
 CREATE PROCEDURE add_reg_proveedores4(in cuit bigint, nombre varchar(50), addres varchar(200), mail varchar(70), phone varchar(50), iva varchar(30))
 BEGIN
@@ -353,15 +355,15 @@ EXECUTE runSQL;
 DEALLOCATE PREPARE runSQL;
 
 
-END
-
-//
+END $$
 
 
 
 -- EJECUCION DEL SP PARA INGRESAR EL REGISTRO DE PROVEEDORES --
 
 CALL add_reg_proveedores4 (12345678901,"MaxMax","Necochea 300","maxmax@mail.com","114258488-58","Responsable Escrito");
+
+
 
 
 
@@ -380,15 +382,15 @@ CREATE TABLE inventario (
 insert into inventario
 values
 (1,260),
-(2,238),
+(2,240),
 (3,278),
 (4,244),
 (5,210),
 (6,149),
-(7,312),
+(7,313),
 (8,165),
 (9,290),
-(10,170),
+(10,167),
 (11,12),
 (12,15),
 (13,7),
@@ -400,10 +402,10 @@ values
 (19,4),
 (20,3);
 
+
+-- SE CREA EL TRIGGER 1 --
+
 DELIMITER $$
-
-
--- SE CREA EL TRIGGER --
 
 CREATE TRIGGER actualizar_stock_ingresos
 AFTER INSERT ON ingresos
@@ -426,10 +428,11 @@ values (5006,"Tablet Samsung A8 gris 10.5´ 64 gris x95","Remito",20347856632,0,
 insert into ingresos
 values (null,10703,5006,20,90,"2023-03-20","14:15:00");
 
-#######
+
+
 -- CREACION DE TRIGGER PARA ACTUALIZAR LOS NUEVOS EGRESOS EN EL STOCK --
 
--- SE CREA EL TRIGGER --
+-- SE CREA EL TRIGGER 2 --
 
 DELIMITER $$
 CREATE TRIGGER actualizar_stock_egresos
@@ -453,9 +456,9 @@ values (1211,"Tablet Samsung A8 gris 10.5´ 64 gris x10","Factura A",0,208565921
 insert into egresos
 values (null,10703,5006,20,10,"2023-03-20","09:15:00");
 
-#######
+
 -- CREACION DE TRIGGER PARA ACTUALIZAR LOS NUEVOS EGRESOS EN EL STOCK POR BAJAS PRODUCTOS DEFECTUOSOS --
--- SE CREA EL TRIGGER --
+-- SE CREA EL TRIGGER 3 --
 
 DELIMITER $$
 CREATE TRIGGER actualizar_stock_defectuosos
@@ -478,7 +481,9 @@ values (null,28,20,3);
 
 select * from inventario;
 
--- CREACION T5ABLA PARA REGISTRO DE OPERACIONES A TRAVES DE TRIGGERS -- 
+
+
+-- CREACION TABLA PARA REGISTRO DE OPERACIONES A TRAVES DE TRIGGERS -- 
 
 CREATE TABLE registro_operaciones (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -487,10 +492,11 @@ CREATE TABLE registro_operaciones (
   fecha_operacion DATE NOT NULL,
   hora_operacion TIME NOT NULL
 );
+
 -- CREACION DEL TIGGERS PARA EL REGISTRO DE OPERACIONES --
+-- CREACION TRIGGER 4 --
 
 delimiter $$
-
 CREATE TRIGGER registro_operaciones
 AFTER INSERT ON ingresos
 FOR EACH ROW
@@ -499,9 +505,9 @@ BEGIN
   VALUES (USER(), NEW.id_ingresos, DATE(NOW()), TIME(NOW()));
 END$$
 
+-- CONSULTAR REGISTROS --
 
 select * from registro_operaciones;
-
 
 
 
@@ -509,16 +515,15 @@ select * from registro_operaciones;
 ### CREACIÓN DE USUARIOS EN MYSQL --
 ## CREACIÓN DE USUARIO Y DEFINICIÓN DE PERMISOS --
 
-use deposito_articulos;
 
 -- CREACIÓN DEL PRIMER USUARIO Y DEFINICIÓN DE LA CONTRASEÑA --
 
-create user 'usuario_vistas'@'localhost' identified by 'usuario_vistas';
+create user 'usuario_lectura'@'localhost' identified by 'usuario_lectura';
 
 
 -- OTORGACION DE PERMISO DE SOLO LECTURA DE TODAS LAS TABLAS DE LA BASE DE DATOS --
 
-grant select on deposito_articulos.* to 'usuario_vistas'@'localhost';
+grant select on deposito2.* to 'usuario_lectura'@'localhost';
 
 
 -- CON ESTA SENTENCIA SE CONFIRMA LOS PERMISOS OTORGADOS --
@@ -528,27 +533,27 @@ flush privileges;
 
 -- CON ESTA SENTENCIA SE RESTRINGE AL USUARIO LA POSIBILIDAD DE ELIMINAR LOS REGISTROS DE LAS TABLAS DE LA BD --
 
-revoke delete on deposito_articulos.* from 'usuario_vistas'@'localhost';
+revoke delete on deposito2.* from 'usuario_lectura'@'localhost';
 
 flush privileges;
 
 
 -- CON ESTA SENTENCIA SE PUEDE COMPROBAR LOS PERMISOS QUE TIENE EL USUARIO --
 
-show grants for 'usuario_vistas'@'localhost';
+show grants for 'usuario_lectura'@'localhost';
 
 
 
 
 ## CREACION DEL SEGUNDO USUARIO --
 
-create user 'usuario_operador'@'localhost' identified by 'usuario_operador';
+create user 'usuario_editor'@'localhost' identified by 'usuario_editor';
 
 
 -- CON ESTA SENTENCIA SE LE ENTREGA AL USUARIO CREADO PERMISOS 
 -- PARA LECTURA, INSERCION Y MODIFICACION DE TODAS LAS TABLAS DE LA BD --
 
-grant select, insert, update on deposito_articulos.* to 'usuario_operador'@'localhost';
+grant select, insert, update on deposito2.* to 'usuario_editor'@'localhost';
 
 
 -- CON ESTA SENTENCIA SE CONFIRMA LOS PERMISOS OTORGADOS --
@@ -558,7 +563,7 @@ flush privileges;
 
 -- CON ESTA SENTENCIA SE RESTRINGE AL USUARIO LA POSIBILIDAD DE ELIMINAR REGISTROS DE LAS TABLAS DE LA BD --
 
-revoke delete on deposito_articulos.* from 'usuario_operador'@'localhost';
+revoke delete on deposito2.* from 'usuario_editor'@'localhost';
 
 flush privileges;
 
@@ -566,6 +571,6 @@ flush privileges;
 
 -- CON ESTA SENTENCIA SE PUEDE COMPROBAR LOS PERMISOS OTORGADOS QUE TIENE EL USUARIO --
 
-show grants for 'usuario_operador'@'localhost';
+show grants for 'usuario_editor'@'localhost';
 
 ### FIN CREACION DE USUARIOS --
